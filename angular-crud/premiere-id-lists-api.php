@@ -23,7 +23,7 @@ if ($conn->connect_error) {
 }
 
 // Fetch public lists
-$sql = "SELECT * FROM listes where id=1";
+$sql = "SELECT * FROM listes order by id desc limit 1";
 $result = $conn->query($sql);
 
 $publicLists = [];
