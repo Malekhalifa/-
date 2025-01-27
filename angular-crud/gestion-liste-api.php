@@ -138,8 +138,71 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             echo json_encode(["message" => "Failed to prepare statement: " . $conn->error]);
         }
     } else {
-        http_response_code(400);
-        echo json_encode(["message" => "Missing 'liste_id' parameter"]);
+        // No 'liste_id' provided: create a new list
+        $data = json_decode(file_get_contents("php://input"), true);
+
+        // Validate the input for creating a new list
+        $required_fields = ['titre', 'soustitre', 'image', 'description', 'type', 'verifie', 'datePublication', 'visibilite'];
+
+        foreach ($required_fields as $field) {
+            if (!isset($data[$field])) {
+                http_response_code(400);
+                echo json_encode(["message" => "Missing or invalid '$field' in request body"]);
+                exit();
+            }
+        }
+
+        // Extract values from the request body
+        $titre = $data['titre'];
+        $soustitre = $data['soustitre'];
+        $image = $data['image'];
+        $description = $data['description'];
+        $type = $data['type'];
+        $verifie = (int) $data['verifie']; // Cast to int for tinyint
+        $datePublication = $data['datePublication'];
+        $visibilite = $data['visibilite'];
+
+        // Prepare the SQL statement to create a new list
+        $sql = "INSERT INTO listes (titre, soustitre, image, description, type, verifie, datePublication, visibilite)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+        $stmt = $conn->prepare($sql);
+
+        if ($stmt) {
+            // Bind parameters to the prepared statement
+            $stmt->bind_param(
+                "sssssiss",
+                $titre,
+                $soustitre,
+                $image,
+                $description,
+                $type,
+                $verifie,
+                $datePublication,
+                $visibilite
+            );
+
+            // Execute the statement and check for success
+            if ($stmt->execute()) {
+                // Get the ID of the newly created list
+                $new_list_id = $stmt->insert_id;
+                http_response_code(201);
+                echo json_encode([
+                    "message" => "New list created successfully",
+                    "list_id" => $new_list_id
+                ]);
+            } else {
+                // Log the SQL error for debugging
+                error_log("SQL Error: " . $stmt->error);
+                http_response_code(500);
+                echo json_encode(["message" => "Error creating new list"]);
+            }
+            $stmt->close();
+        } else {
+            // Log preparation error for debugging
+            error_log("Failed to prepare statement: " . $conn->error);
+            http_response_code(500);
+            echo json_encode(["message" => "Failed to prepare statement"]);
+        }
     }
 }
 
@@ -152,7 +215,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
         echo json_encode(["message" => "Invalid value for visibilite. Allowed values are 'publique' or 'prive'."]);
         exit();
     }
-    $id = $data['id'];
+    if (isset($data['id'])) {
+        $id = $data['id'];
+    }
     $titre = $data['titre'];
     $soustitre = $data['soustitre'];
     $image = $data['image'];
@@ -199,13 +264,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         $stmt->close();
     } else {
         // Delete a list
-        $id = $_GET['id'];
+        if (isset($_GET['id'])) {
+            $id = $_GET['id'];
+        }
 
         $sql = "DELETE FROM listes WHERE id = ?";
         $stmt = $conn->prepare($sql);
         $stmt->bind_param("i", $id);
 
-        if ($stmt->execute()) {
+        if ($stmt->execute() && isset($_GET['id'])) {
             http_response_code(200);
             echo json_encode(["message" => "List deleted successfully"]);
         } else {
