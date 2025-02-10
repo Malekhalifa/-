@@ -187,7 +187,7 @@ ALTER TABLE `listes`
 --
 ALTER TABLE `listes_chansons`
   ADD PRIMARY KEY (`ordre`),
-  ADD UNIQUE KEY `chanson_id` (`chanson_id`),
+  ADD KEY `chanson_id` (`chanson_id`),
   ADD KEY `fk_liste_chansons_liste` (`liste_id`);
 
 --

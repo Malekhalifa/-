@@ -1,8 +1,8 @@
 <?php
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
-header("Access-Control-Allow-Origin:*"); // Allow requests from Angular app
-header("Content-Type: application/json; charset=UTF-8"); // Set response type to JSON
+header("Access-Control-Allow-Origin:http://localhost:4200"); // Allow requests from Angular app
+header("Content-Type: application/json;"); // Set response type to JSON
 header("Access-Control-Allow-Methods: GET, POST, PUT, DELETE"); // Allow these methods
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
@@ -101,10 +101,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
 
 // Handle POST request (create a new list or add a chanson to a list)
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Check if the request is for adding a chanson to a list
-    if (isset($_GET['liste_id'])) {
-        $liste_id = $_GET['liste_id'];
-        $data = json_decode(file_get_contents("php://input"), true);
+    $data = json_decode(file_get_contents("php://input"), true);
+
+    if (isset($data['liste_id'])) {
+        $liste_id = $data['liste_id'];
 
         // Validate chanson_id
         if (!isset($data['chanson_id']) || !is_numeric($data['chanson_id'])) {
@@ -116,7 +116,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $chanson_id = $data['chanson_id'];
 
         // Prepare the SQL statement
-        $sql = "INSERT INTO listes_chansons (liste_id, chanson_id) VALUES (?, ?)";
+        $sql = "INSERT INTO listes_chansons (liste_id, chanson_id,ordre) VALUES (?,  ?,NULL)";
         $stmt = $conn->prepare($sql);
 
         if ($stmt) {

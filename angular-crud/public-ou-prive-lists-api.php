@@ -26,11 +26,11 @@ if ($conn->connect_error) {
 $sql = "SELECT * FROM listes";
 $result = $conn->query($sql);
 
-$publicLists = [];
+$Listes = [];
 while ($row = $result->fetch_assoc()) {
-    $publicLists[] = $row;
+    $Listes[] = $row;
 }
 
-echo json_encode($publicLists);
+echo json_encode($Listes);
 $conn->close();
 ?>
